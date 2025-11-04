@@ -1,18 +1,33 @@
+'use client'
+
+import { useState } from 'react'
+import { Header } from '@/components/Header'
+import { Footer } from '@/components/Footer'
+import { Sidebar } from '@/components/Sidebar'
+import { ChatContainer } from '@/components/ChatContainer'
+import { Toaster } from '@/components/ui/toaster'
+
 export default function Home() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-center font-mono text-sm">
-        <h1 className="text-4xl font-bold text-center mb-8">
-          MathSageAI
-        </h1>
-        <p className="text-center text-lg text-gray-600">
-          AI Math Tutor - Socratic Learning Assistant
-        </p>
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Coming soon...
-        </p>
+    <div className="flex flex-col min-h-screen bg-slate-50">
+      <Header />
+      
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => setIsSidebarOpen(false)} 
+        />
+        
+        <main className="flex-1 overflow-y-auto">
+          <ChatContainer />
+        </main>
       </div>
-    </main>
+
+      <Footer />
+      <Toaster />
+    </div>
   )
 }
 

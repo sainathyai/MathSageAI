@@ -60,21 +60,32 @@ yarn install
 
 ### 3. Environment Variables
 
-Create a `.env.local` file in the root directory:
-
-```env
-# OpenAI Configuration
-OPENAI_API_KEY=your_openai_api_key_here
-
-# AWS Configuration
-# Note: AWS CLI is already configured - uses credentials from ~/.aws/credentials
-AWS_REGION=us-east-1
-DYNAMODB_TABLE_NAME=mathsage-sessions
-S3_BUCKET_NAME=mathsage-images
-
-# Next.js Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+**Automatic Setup** (Recommended):
+```bash
+npm run setup:env
 ```
+
+This creates `.env.local` from `.env.example`. Then edit `.env.local` and add your OpenAI API key.
+
+**Manual Setup**:
+Copy `.env.example` to `.env.local` and add your values:
+```bash
+cp .env.example .env.local
+```
+
+**Required Variables:**
+- `OPENAI_API_KEY` - Your OpenAI API key
+- `AWS_REGION` - AWS region (default: us-east-1)
+- `DYNAMODB_TABLE_NAME` - DynamoDB table name
+- `S3_BUCKET_NAME` - S3 bucket name
+- `NEXT_PUBLIC_APP_URL` - App URL (default: http://localhost:3000)
+
+**Note**: AWS credentials are automatically loaded from AWS CLI configuration (`~/.aws/credentials`). No need to set them in `.env.local`.
+
+**See**: 
+- [docs/ENVIRONMENT_SETUP.md](./docs/ENVIRONMENT_SETUP.md) - Environment variables guide
+- [docs/LOGO_SETUP.md](./docs/LOGO_SETUP.md) - Logo setup instructions
+- [docs/AWS_RESOURCES.md](./docs/AWS_RESOURCES.md) - AWS infrastructure details
 
 ### 4. Run Development Server
 

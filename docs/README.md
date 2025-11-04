@@ -47,6 +47,31 @@ This folder contains all project documentation for MathSageAI.
   - Performance and deployment considerations
   - Rationale for choosing Next.js
 
+- **[ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md)** - Environment variables setup guide
+  - How Next.js loads environment variables automatically
+  - Setup instructions and validation
+  - AWS credentials configuration
+
+- **[LOGO_SETUP.md](./LOGO_SETUP.md)** - Logo integration instructions
+  - How to add professional logo file
+  - Logo specifications and formats
+  - Troubleshooting guide
+
+- **[AWS_RESOURCES.md](./AWS_RESOURCES.md)** - AWS infrastructure details
+  - DynamoDB table configuration
+  - S3 bucket setup and policies
+  - Cost estimates and resource ARNs
+
+- **[UI_UX_DESIGN_PLAN.md](./UI_UX_DESIGN_PLAN.md)** - UI/UX design documentation
+  - Design philosophy and color palette
+  - Component design specifications
+  - Responsive design breakpoints
+
+- **[PLAN_IMPROVEMENTS_ANALYSIS.md](./PLAN_IMPROVEMENTS_ANALYSIS.md)** - Plan improvements review
+  - Analysis of suggested improvements
+  - Complexity assessment
+  - MVP vs post-MVP prioritization
+
 ## 📖 Quick Reference
 
 ### For Project Understanding

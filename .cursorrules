@@ -110,6 +110,16 @@ Before implementing any of these, discuss alternatives:
 - **Encouraging tone** - Use positive, supportive language
 - **Context maintenance** - Keep conversation history for continuity
 
+## Git & Testing Rules
+
+- **NEVER commit changes without testing** - Always test changes before committing
+- **Test locally first** - Run `npm run dev` and verify functionality
+- **Build must succeed** - Ensure `npm run build` passes before committing
+- **Verify UI/UX** - Test responsive design, interactions, and accessibility
+- **Check for errors** - Verify no console errors, linting issues, or type errors
+- **Test all affected features** - Don't commit if related features are broken
+- **User confirmation** - Get user approval before committing significant changes
+
 ## Testing Requirements
 
 - Test with 5+ problem types (arithmetic, algebra, geometry, word problems, multi-step)
