@@ -18,9 +18,109 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Log file details for debugging
+      console.log('📸 Image selected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: new Date(file.lastModified).toISOString(),
+      })
+      
+      // Validate file type
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp']
+      const fileExtension = file.name.split('.').pop()?.toLowerCase()
+      const allowedExtensions = ['png', 'jpeg', 'jpg', 'gif', 'webp']
+      
+      // Check for HEIC/HEIF by extension or MIME type
+      if (fileExtension === 'heic' || fileExtension === 'heif' || file.type === 'image/heic' || file.type === 'image/heif') {
+        console.error('❌ HEIC/HEIF format detected:', {
+          fileType: file.type,
+          fileExtension: fileExtension,
+        })
+        alert('HEIC/HEIF format is not supported. Please convert your image to PNG or JPEG. You can do this by opening the image and saving it as PNG or JPEG format.')
+        return
+      }
+      
+      // Check actual file content (not just extension) for HEIC format
+      // Read first few bytes to detect actual format
+      try {
+        const arrayBuffer = await file.slice(0, 20).arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+        const hexString = Array.from(uint8Array)
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+        
+        // Convert to string to check for 'ftyp' signature
+        const textStart = Array.from(uint8Array.slice(4, 12))
+          .map(b => String.fromCharCode(b))
+          .join('')
+        
+        console.log('🔍 File binary signature check:', {
+          hex: hexString.substring(0, 32),
+          text: textStart,
+          bytes4_7: `${uint8Array[4]},${uint8Array[5]},${uint8Array[6]},${uint8Array[7]}`,
+        })
+        
+        // Check for HEIC/HEIF/AVIF magic numbers
+        // HEIC files have 'ftyp' at bytes 4-7, followed by 'heic', 'heif', 'mif1', or 'avif'
+        const isHEIC = textStart.includes('ftyp') && (textStart.includes('heic') || textStart.includes('heif') || textStart.includes('mif1')) ||
+                       hexString.includes('6674797068656966') || // 'ftypheif' in hex
+                       hexString.includes('667479706d696631') || // 'ftypmif1' in hex
+                       hexString.includes('6674797068656963') || // 'ftypheic' in hex
+                       (uint8Array[4] === 0x66 && uint8Array[5] === 0x74 && uint8Array[6] === 0x79 && uint8Array[7] === 0x70 && 
+                        (uint8Array[8] === 0x68 && uint8Array[9] === 0x65 && uint8Array[10] === 0x69 && uint8Array[11] === 0x63)) // 'ftypheic'
+        
+        const isAVIF = textStart.includes('avif') || hexString.includes('6674797061766966') // 'ftypavif' in hex
+        
+        if (isHEIC) {
+          console.error('❌ HEIC/HEIF format detected in file content (even though extension is .png):', {
+            fileType: file.type,
+            fileExtension: fileExtension,
+            hexSignature: hexString.substring(0, 32),
+            textSignature: textStart,
+            bytes: Array.from(uint8Array).join(',')
+          })
+          alert('This file appears to be in HEIC/HEIF format even though it has a .png extension. Simply renaming the file doesn\'t convert it. Please open the image in an image editor (like Photos on Mac, Paint on Windows, or an online converter) and save/export it as PNG or JPEG format.')
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
+          return
+        }
+        
+        if (isAVIF) {
+          console.error('❌ AVIF format detected in file content (even though extension is .png):', {
+            fileType: file.type,
+            fileExtension: fileExtension,
+            hexSignature: hexString.substring(0, 32),
+            textSignature: textStart,
+            bytes: Array.from(uint8Array).join(',')
+          })
+          alert('This file appears to be in AVIF format even though it has a .png extension. AVIF is not supported. Please open the image in an image editor and save/export it as PNG or JPEG format.')
+          if (fileInputRef.current) {
+            fileInputRef.current.value = ''
+          }
+          return
+        }
+      } catch (error) {
+        console.warn('⚠️ Could not read file content for format detection:', error)
+        // Continue with extension-based validation if we can't read the file
+      }
+      
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension || '')) {
+        console.error('❌ Unsupported image format:', {
+          fileType: file.type,
+          fileExtension: fileExtension,
+          allowedTypes: allowedTypes,
+          allowedExtensions: allowedExtensions,
+        })
+        alert(`Unsupported image format. Please use one of: ${allowedExtensions.join(', ')}`)
+        return
+      }
+      
+      console.log('✅ Image format validated successfully')
       setSelectedImage(file)
       const reader = new FileReader()
       reader.onloadend = () => {
@@ -59,7 +159,7 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
   }
 
   return (
-    <div className="border-t border-slate-200 bg-white p-4">
+    <div className="border-t border-slate-200/50 bg-gradient-input p-4 backdrop-blur-sm">
       <div className="container max-w-4xl mx-auto">
         {/* Image Preview */}
         {imagePreview && (

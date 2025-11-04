@@ -3,11 +3,15 @@
 import Link from 'next/link'
 import { Heart, Github, Mail, BookOpen } from 'lucide-react'
 
-export function Footer() {
+interface FooterProps {
+  className?: string
+}
+
+export function Footer({ className = '' }: FooterProps) {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-brand-blue-light/20 bg-gradient-to-r from-brand-blue-light/10 via-white to-brand-green-light/10 backdrop-blur-md">
+    <footer className={`border-t border-brand-blue-light/20 bg-gradient-to-r from-brand-blue-light/10 via-white to-brand-green-light/10 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-brand-blue-light/20 supports-[backdrop-filter]:via-white/90 supports-[backdrop-filter]:to-brand-green-light/20 ${className}`}>
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Brand Section */}

@@ -5,12 +5,16 @@ import { Button } from '@/components/ui/button'
 import { BookOpen, Plus, Menu, HelpCircle, Info } from 'lucide-react'
 import { useState } from 'react'
 
-export function Header() {
+interface HeaderProps {
+  className?: string
+}
+
+export function Header({ className = '' }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-brand-blue-light/20 bg-gradient-to-r from-brand-blue-light/10 via-white to-brand-green-light/10 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-brand-blue-light/20 supports-[backdrop-filter]:via-white/90 supports-[backdrop-filter]:to-brand-green-light/20">
+    <header className={`sticky top-0 z-50 w-full border-b border-brand-blue-light/20 bg-gradient-to-r from-brand-blue-light/10 via-white to-brand-green-light/10 backdrop-blur-md supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-brand-blue-light/20 supports-[backdrop-filter]:via-white/90 supports-[backdrop-filter]:to-brand-green-light/20 ${className}`}>
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-3">

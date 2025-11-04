@@ -8,6 +8,7 @@ This document provides the complete, sequential implementation plan that integra
 - Original project requirements (Socratic method, MVP features)
 - Plan improvements analysis (prioritized enhancements)
 - Learning science implementation (7-phase comprehensive system)
+- **Adaptive System Architecture** (context-aware, intelligent tutoring)
 
 ---
 
@@ -25,7 +26,9 @@ This document provides the complete, sequential implementation plan that integra
 **Total Estimated Time:** 15-22 weeks (sequential, thorough implementation)
 
 **Phases:**
-1. Enhanced Feedback System (2-3 weeks) ⭐ START HERE
+1. Enhanced Feedback System + Adaptive Architecture (3-4 weeks) ⭐ START HERE
+   - Adaptive System Architecture (Foundation - Week 1)
+   - Enhanced Feedback System (Weeks 2-3)
 2. Concept Tracking & Tagging (2-3 weeks)
 3. Growth Mindset & Anxiety Reduction (1-2 weeks)
 4. Conceptual Understanding First (2-3 weeks)
@@ -35,15 +38,43 @@ This document provides the complete, sequential implementation plan that integra
 
 ---
 
-## Phase 1: Enhanced Feedback System ⭐ START HERE
+## Phase 1: Enhanced Feedback System + Adaptive System Architecture ⭐ START HERE
 
 ### Problem Addressed
 - **Ineffective Feedback**: Students get grades without explanation, can't understand mistakes
+- **Hardcoded Responses**: System requires prompt updates for each edge case, doesn't scale
 
 ### Solution
-Comprehensive feedback system that analyzes steps, identifies misconceptions, and provides actionable guidance.
+Comprehensive feedback system that analyzes steps, identifies misconceptions, and provides actionable guidance, **powered by an adaptive, context-aware architecture** that responds intelligently to student needs without hardcoded rules.
 
-### Components
+### Architecture Foundation: Adaptive System
+
+**Critical Component:** Before implementing feedback features, we build the **adaptive system architecture** that makes the AI tutor smart and context-aware. This replaces hardcoded prompt rules with intelligent, dynamic response generation.
+
+#### 0.1 Adaptive System Architecture (Foundation)
+**Implementation:**
+- **Context Detection Layer**: Analyze conversation to detect student state (knowledge gap, stuck, confused, frustrated, etc.)
+- **Strategy Selection Layer**: Map detected state to appropriate tutoring strategy
+- **Adaptive Prompt Generation**: Build prompts dynamically based on context and strategy
+- Replace hardcoded edge cases with intelligent, adaptive responses
+
+**Technical Approach:**
+- Create state detection system using LLM analysis
+- Build strategy mapping system (method discovery, progressive hints, clarification, etc.)
+- Implement dynamic prompt builder that assembles context-specific prompts
+- Design modular strategy system for easy extension
+
+**Success Criteria:**
+- System detects student states automatically (no hardcoded rules)
+- Appropriate strategies selected based on context
+- Prompts adapt to situation dynamically
+- Handles edge cases automatically without prompt updates
+
+**See:** [ADAPTIVE_SYSTEM_DESIGN.md](./ADAPTIVE_SYSTEM_DESIGN.md) for complete architecture details
+
+---
+
+### Feedback System Components
 
 #### 1.1 Step Analysis Engine
 **Implementation:**
@@ -103,8 +134,9 @@ Comprehensive feedback system that analyzes steps, identifies misconceptions, an
 - Remediation suggestions provided
 
 ### Integration Points
-- Integrates with existing Socratic method
-- Enhances OpenAI API responses
+- **Adaptive System** provides foundation for all tutoring responses
+- Integrates with existing Socratic method through adaptive strategies
+- Enhances OpenAI API responses with context-aware prompts
 - Stores error data in DynamoDB
 - Feeds into Concept Tracking (Phase 2)
 
@@ -753,10 +785,11 @@ Multi-modal explanation system that ensures conceptual understanding before proc
 - [PROJECT_PLAN.md](./PROJECT_PLAN.md) - Original project plan with MVP details
 - [PLAN_IMPROVEMENTS_ANALYSIS.md](./PLAN_IMPROVEMENTS_ANALYSIS.md) - Detailed analysis of suggested improvements
 - [LEARNING_SCIENCE_IMPLEMENTATION.md](./LEARNING_SCIENCE_IMPLEMENTATION.md) - Learning science implementation details
+- [ADAPTIVE_SYSTEM_DESIGN.md](./ADAPTIVE_SYSTEM_DESIGN.md) - **Adaptive System Architecture** - Context-aware, intelligent tutoring system
 
 ---
 
-**Status**: Ready to begin Phase 1: Enhanced Feedback System
+**Status**: Ready to begin Phase 1: Enhanced Feedback System + Adaptive Architecture
 
-**Next Step**: Begin implementation of Step Analysis Engine
+**Next Step**: Begin implementation of Adaptive System Architecture (Foundation - Week 1)
 

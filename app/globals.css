@@ -2,9 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure user message text is white on blue background */
 @layer utilities {
+  .user-message-text {
+    color: white !important;
+  }
+  
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* Subtle pattern background for chat window */
+  .chat-pattern {
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(135, 206, 235, 0.08) 1px, transparent 0),
+      radial-gradient(circle at 1px 1px, rgba(144, 238, 144, 0.08) 1px, transparent 0);
+    background-size: 40px 40px, 60px 60px;
+    background-position: 0 0, 20px 20px;
+  }
+  
+  /* Custom scrollbar for chat messages */
+  .chat-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .chat-scrollbar::-webkit-scrollbar-track {
+    background: rgba(148, 163, 184, 0.1);
+    border-radius: 4px;
+  }
+  
+  .chat-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 4px;
+  }
+  
+  .chat-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+  }
+  
+  /* Firefox scrollbar */
+  .chat-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) rgba(148, 163, 184, 0.1);
   }
 }
 

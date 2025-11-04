@@ -77,6 +77,9 @@ const config: Config = {
 		backgroundImage: {
 			'gradient-brand': 'linear-gradient(135deg, #87CEEB 0%, #90EE90 100%)',
 			'gradient-owl': 'linear-gradient(135deg, #4A90E2 0%, #7FFF00 100%)',
+			'gradient-ai': 'linear-gradient(135deg, #AFEEEE 0%, #DDA0DD 100%)', // Light teal to plum - complements user gradient
+			'gradient-chat': 'linear-gradient(to bottom, rgba(135, 206, 235, 0.05) 0%, rgba(144, 238, 144, 0.05) 100%)', // Light blue to green for chat window
+			'gradient-input': 'linear-gradient(to top, rgba(175, 238, 238, 0.08) 0%, rgba(221, 160, 221, 0.08) 100%)', // Light teal to plum for input area
 		},
   		borderRadius: {
   			lg: 'var(--radius)',

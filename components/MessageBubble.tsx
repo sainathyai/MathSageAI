@@ -3,16 +3,10 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { Bot, User } from 'lucide-react'
-
-export type MessageRole = 'user' | 'assistant' | 'system'
-
-export interface Message {
-  id: string
-  role: MessageRole
-  content: string
-  timestamp: Date
-  imageUrl?: string
-}
+import { Message } from '@/app/types'
+import { useState } from 'react'
+import { renderMathContent } from '@/app/utils/mathRenderer'
+import 'katex/dist/katex.min.css'
 
 interface MessageBubbleProps {
   message: Message
@@ -45,7 +39,7 @@ export function MessageBubble({ message, isAnimated = false }: MessageBubbleProp
       {/* Avatar */}
       <Avatar className={cn(
         "h-8 w-8 flex-shrink-0 overflow-hidden",
-        isUser ? "bg-brand-blue-DEFAULT" : "bg-gradient-brand"
+        isUser ? "bg-gradient-brand" : "bg-gradient-ai"
       )}>
         <AvatarFallback className="bg-transparent">
           {isUser ? (
@@ -100,12 +94,18 @@ export function MessageBubble({ message, isAnimated = false }: MessageBubbleProp
         <div className={cn(
           "rounded-2xl px-4 py-3 shadow-sm",
           isUser 
-            ? "bg-brand-blue-DEFAULT text-white rounded-tr-sm" 
-            : "bg-white border border-slate-200 text-slate-900 rounded-tl-sm"
+            ? "bg-gradient-brand rounded-tr-sm" 
+            : "bg-gradient-ai rounded-tl-sm border border-slate-200/50"
         )}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </p>
+          <div 
+            className={cn(
+              "text-sm leading-relaxed whitespace-pre-wrap",
+              isUser ? "user-message-text" : "text-slate-900"
+            )}
+            style={isUser ? { color: '#ffffff' } : undefined}
+          >
+            {renderMathContent(message.content)}
+          </div>
         </div>
       </div>
     </div>
