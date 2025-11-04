@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: 'An intelligent math tutoring application that guides students through math problems using the Socratic method.',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', type: 'image/png' },
       { url: '/favicon.ico', sizes: 'any' },
     ],
   },

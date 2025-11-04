@@ -9,13 +9,28 @@ import { AuthModal } from '@/components/auth/AuthModal'
 
 interface HeaderProps {
   className?: string
+  onAuthClick?: () => void
 }
 
-export function Header({ className = '' }: HeaderProps) {
+export function Header({ className = '', onAuthClick }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const { user, signOut, isAuthenticated } = useAuth()
+
+  const handleAuthButtonClick = () => {
+    if (onAuthClick) {
+      onAuthClick()
+      // Check if user has visited - if yes, also show AuthModal
+      const hasVisited = typeof window !== 'undefined' ? localStorage.getItem('mathsage_visited') : null
+      if (hasVisited) {
+        setShowAuthModal(true)
+      }
+    } else {
+      // Fallback to AuthModal if no callback provided
+      setShowAuthModal(true)
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -101,7 +116,7 @@ export function Header({ className = '' }: HeaderProps) {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => setShowAuthModal(true)}
+              onClick={handleAuthButtonClick}
               className="gap-2"
             >
               <LogIn className="h-4 w-4" />
@@ -158,14 +173,14 @@ export function Header({ className = '' }: HeaderProps) {
                 </Button>
               </>
             ) : (
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => setShowAuthModal(true)}
-              >
-                <LogIn className="mr-2 h-4 w-4" />
-                Sign In
-              </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleAuthButtonClick}
+                  >
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Sign In
+                  </Button>
             )}
           </nav>
         </div>

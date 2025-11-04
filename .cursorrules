@@ -113,12 +113,14 @@ Before implementing any of these, discuss alternatives:
 ## Git & Testing Rules
 
 - **NEVER commit changes without testing** - Always test changes before committing
+- **NEVER push to GitHub without user confirmation** - Always wait for user to test and confirm changes work before pushing
 - **Test locally first** - Run `npm run dev` and verify functionality
 - **Build must succeed** - Ensure `npm run build` passes before committing
 - **Verify UI/UX** - Test responsive design, interactions, and accessibility
 - **Check for errors** - Verify no console errors, linting issues, or type errors
 - **Test all affected features** - Don't commit if related features are broken
 - **User confirmation** - Get user approval before committing significant changes
+- **Git push workflow** - Only push after user confirms the changes work correctly after testing
 
 ## Testing Requirements
 

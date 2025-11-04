@@ -11,8 +11,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { saveSession, generateSessionTitle } from '@/lib/session-manager'
 import { uploadImageToS3 } from '@/lib/image-upload'
 import { useToast } from '@/hooks/use-toast'
+import { getSession, SessionData } from '@/lib/session-manager'
 
 interface ChatContainerProps {
+  selectedSessionId?: string | null
   onSessionUpdate?: (session: {
     sessionId: string
     title: string
@@ -20,10 +22,11 @@ interface ChatContainerProps {
   }) => void
 }
 
-export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
+export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContainerProps = {}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId] = useState<string>(() => uuidv4())
+  const [loadingSession, setLoadingSession] = useState(false)
+  const [sessionId, setSessionId] = useState<string>(() => uuidv4())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -37,6 +40,56 @@ export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
       container.scrollTop = container.scrollHeight
     }
   }
+
+  // Load session when selectedSessionId changes
+  useEffect(() => {
+    if (selectedSessionId) {
+      const loadSession = async () => {
+        setLoadingSession(true)
+        try {
+          const sessionData = await getSession(selectedSessionId)
+          if (sessionData) {
+            setSessionId(sessionData.sessionId)
+            // Convert session messages to Message format (timestamp is ISO string, convert to Date)
+            const loadedMessages: Message[] = sessionData.messages.map(msg => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            }))
+            setMessages(loadedMessages)
+            
+            // Update parent with session info
+            if (onSessionUpdate) {
+              onSessionUpdate({
+                sessionId: sessionData.sessionId,
+                title: sessionData.title,
+                messageCount: sessionData.messages.length,
+              })
+            }
+          } else {
+            toast({
+              title: "Session not found",
+              description: "The selected session could not be loaded.",
+              variant: "destructive",
+            })
+          }
+        } catch (error) {
+          console.error('Error loading session:', error)
+          toast({
+            title: "Error loading session",
+            description: "Failed to load the selected session. Please try again.",
+            variant: "destructive",
+          })
+        } finally {
+          setLoadingSession(false)
+        }
+      }
+      loadSession()
+    } else {
+      // Reset to new session if no session selected
+      setMessages([])
+      setSessionId(uuidv4())
+    }
+  }, [selectedSessionId, onSessionUpdate, toast])
 
   useEffect(() => {
     // Only scroll if there are multiple messages (user + AI response)
@@ -65,7 +118,7 @@ export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
       const title = generateSessionTitle(messages)
       const now = new Date().toISOString()
 
-      await saveSession({
+      const sessionData = {
         sessionId,
         userId: user?.userId,
         title,
@@ -73,7 +126,9 @@ export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
         createdAt: now,
         updatedAt: now,
         isGuest: !isAuthenticated,
-      })
+      }
+      console.log('💾 Saving session:', { sessionId, userId: user?.userId, messageCount: messages.length, isGuest: !isAuthenticated })
+      await saveSession(sessionData)
 
       // Update parent component with current session info
       if (onSessionUpdate) {
@@ -315,7 +370,17 @@ export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
     <div className="flex flex-col w-full h-full bg-gradient-chat">
       {/* Messages Area - scrollable, takes remaining space */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden chat-scrollbar">
-        {messages.length === 0 ? (
+        {loadingSession ? (
+          <div className="container max-w-4xl mx-auto px-4 py-8">
+            <div className="flex items-center justify-center gap-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+            </div>
+          </div>
+        ) : messages.length === 0 ? (
           <WelcomeScreen onSelectExample={handleSelectExample} />
         ) : (
           <div className="container max-w-4xl mx-auto px-4 py-2">
@@ -354,7 +419,7 @@ export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
             <ChatInput
               ref={inputRef}
               onSendMessage={handleSendMessage}
-              disabled={isLoading}
+              disabled={isLoading || loadingSession}
             />
           </div>
     </div>

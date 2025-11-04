@@ -11,9 +11,10 @@ import { Loader2, Sparkles, GraduationCap, Brain } from 'lucide-react'
 
 interface WelcomeModalProps {
   onClose: () => void
+  onMarkVisited?: () => void
 }
 
-export function WelcomeModal({ onClose }: WelcomeModalProps) {
+export function WelcomeModal({ onClose, onMarkVisited }: WelcomeModalProps) {
   const { signIn, signUp, confirmSignUp } = useAuth()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
@@ -37,6 +38,8 @@ export function WelcomeModal({ onClose }: WelcomeModalProps) {
       title: 'Welcome!',
       description: 'You can start learning right away. Sign up later to save your progress.',
     })
+    // Mark as visited when user explicitly chooses guest mode
+    onMarkVisited?.()
     onClose()
   }
 
@@ -50,6 +53,8 @@ export function WelcomeModal({ onClose }: WelcomeModalProps) {
         title: 'Welcome back!',
         description: 'You have successfully signed in.',
       })
+      // Mark as visited when user successfully signs in
+      onMarkVisited?.()
       onClose()
     } catch (error: any) {
       toast({
@@ -105,6 +110,8 @@ export function WelcomeModal({ onClose }: WelcomeModalProps) {
         title: 'Account verified!',
         description: 'You can now sign in with your credentials.',
       })
+      // Mark as visited when user successfully confirms sign up
+      onMarkVisited?.()
       setNeedsConfirmation(false)
       setConfirmCode('')
     } catch (error: any) {

@@ -29,6 +29,8 @@ export const env = {
 // Client-side environment variables (available in browser)
 export const publicEnv = {
   appUrl: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  cognitoUserPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || '',
+  cognitoClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '',
 } as const
 
 /**

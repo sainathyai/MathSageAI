@@ -10,12 +10,14 @@ import { useState, useEffect } from 'react'
 import { AuthModal } from '@/components/auth/AuthModal'
 import { getUserSessions, formatTimestamp, SessionData } from '@/lib/session-manager'
 import { renderMathContent } from '@/app/utils/mathRenderer'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import 'katex/dist/katex.min.css'
 
 interface SidebarProps {
   isOpen: boolean
   onClose?: () => void
   onNewChat?: () => void
+  onSessionSelect?: (sessionId: string) => void
   currentSession?: {
     sessionId: string
     title: string
@@ -23,7 +25,7 @@ interface SidebarProps {
   } | null
 }
 
-export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onNewChat, onSessionSelect, currentSession }: SidebarProps) {
   const { isAuthenticated, user } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [sessions, setSessions] = useState<SessionData[]>([])
@@ -33,10 +35,14 @@ export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarP
   useEffect(() => {
     if (isAuthenticated && user?.userId) {
       setLoading(true)
+      console.log('🔍 Fetching sessions for userId:', user.userId)
       getUserSessions(user.userId)
-        .then(setSessions)
+        .then(sessions => {
+          console.log('✅ Loaded sessions:', sessions.length, sessions)
+          setSessions(sessions)
+        })
         .catch(error => {
-          console.error('Failed to load sessions:', error)
+          console.error('❌ Failed to load sessions:', error)
           setSessions([])
         })
         .finally(() => setLoading(false))
@@ -110,24 +116,26 @@ export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarP
             )}
           </div>
 
-          <div className="space-y-1.5">
-            {loading ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-slate-500">Loading sessions...</p>
-              </div>
-            ) : sessionsToDisplay.length === 0 ? (
-              <div className="text-center py-4">
-                <p className="text-sm text-slate-500">No sessions yet</p>
-                <p className="text-xs text-slate-400 mt-1">Start chatting to create your first session</p>
-              </div>
-            ) : (
-              sessionsToDisplay.map((session, index) => {
+          <TooltipProvider>
+            <div className="space-y-1.5">
+              {loading ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-slate-500">Loading sessions...</p>
+                </div>
+              ) : sessionsToDisplay.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-sm text-slate-500">No sessions yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Start chatting to create your first session</p>
+                </div>
+              ) : (
+                sessionsToDisplay.map((session, index) => {
                 const isCurrentSession = currentSession && session.sessionId === currentSession.sessionId
                 return (
                   <button
                     key={session.sessionId}
+                    onClick={() => onSessionSelect?.(session.sessionId)}
                     className={cn(
-                      "group w-full rounded-lg p-3 text-left transition-colors hover:bg-gradient-brand hover:bg-opacity-10",
+                      "group w-full rounded-lg p-3 text-left transition-colors hover:bg-gradient-brand hover:bg-opacity-10 cursor-pointer",
                       isCurrentSession && "bg-gradient-brand bg-opacity-10 border-2 border-brand-blue-DEFAULT/30"
                     )}
                   >
@@ -137,9 +145,23 @@ export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarP
                         isCurrentSession ? "text-brand-blue-DEFAULT" : "text-slate-400"
                       )} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-slate-900 truncate">
-                          {renderMathContent(session.title)}
-                        </div>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="text-sm font-medium text-slate-900 break-words line-clamp-2 cursor-default">
+                              {renderMathContent(session.title)}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent 
+                            side="top" 
+                            sideOffset={2}
+                            align="start"
+                            className="max-w-xs bg-slate-800 text-white border-slate-700 p-2"
+                          >
+                            <div className="text-sm">
+                              {renderMathContent(session.title)}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
                         <div className="flex items-center gap-1 mt-1">
                           <Clock className="h-3 w-3 text-slate-400" />
                           <p className="text-xs text-slate-500">
@@ -156,8 +178,9 @@ export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarP
                   </button>
                 )
               })
-            )}
-          </div>
+              )}
+            </div>
+          </TooltipProvider>
           
           {!isAuthenticated && (
             <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-brand-blue-light/10 to-brand-green-light/10 border border-brand-blue-light/20">
