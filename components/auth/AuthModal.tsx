@@ -112,16 +112,16 @@ export function AuthModal({ onClose }: AuthModalProps) {
 
   if (needsConfirmation) {
     return (
-      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Verify Your Email</CardTitle>
-            <CardDescription>
-              Enter the verification code sent to {pendingEmail}
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-brand-blue-light/20 via-white/95 to-brand-green-light/20 backdrop-blur-md flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-2 border-brand-blue-light/30 shadow-2xl">
+          <CardHeader className="bg-gradient-to-r from-brand-blue-light/10 to-brand-green-light/10">
+            <CardTitle className="text-2xl">Verify Your Email</CardTitle>
+            <CardDescription className="text-base">
+              Enter the verification code sent to <strong>{pendingEmail}</strong>
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleConfirmSignUp}>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               <Input
                 type="text"
                 placeholder="Verification code"
@@ -129,6 +129,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
                 onChange={(e) => setConfirmCode(e.target.value)}
                 required
                 maxLength={6}
+                className="text-center text-2xl tracking-widest"
               />
             </CardContent>
             <CardFooter className="flex gap-2">
@@ -140,7 +141,11 @@ export function AuthModal({ onClose }: AuthModalProps) {
               >
                 Back
               </Button>
-              <Button type="submit" disabled={loading} className="flex-1">
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                className="flex-1 bg-gradient-brand hover:opacity-90 text-white"
+              >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Verify
               </Button>
@@ -152,39 +157,64 @@ export function AuthModal({ onClose }: AuthModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome to MathSageAI</CardTitle>
-          <CardDescription>
+    <div className="fixed inset-0 z-50 bg-gradient-to-br from-brand-blue-light/20 via-white/95 to-brand-green-light/20 backdrop-blur-md flex items-center justify-center p-4">
+      <Card className="w-full max-w-md border-2 border-brand-blue-light/30 shadow-2xl">
+        <CardHeader className="bg-gradient-to-r from-brand-blue-light/10 via-white to-brand-green-light/10 text-center">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-brand shadow-lg">
+              <span className="text-2xl">🦉</span>
+            </div>
+          </div>
+          <CardTitle className="text-2xl">
+            Welcome to <span className="text-brand-blue-dark">Math</span>
+            <span className="text-brand-green-DEFAULT">Sage</span>
+            <span className="text-brand-blue-dark">AI</span>
+          </CardTitle>
+          <CardDescription className="text-base text-slate-700">
             Sign in to save your learning history and track progress
           </CardDescription>
         </CardHeader>
         <Tabs defaultValue="signin" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
+          <div className="flex justify-center mt-4 mb-2">
+            <TabsList className="grid grid-cols-2 w-64">
+              <TabsTrigger value="signin" className="text-sm">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm">Sign Up</TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="signin">
+          <TabsContent value="signin" className="px-6 pb-6">
             <form onSubmit={handleSignIn}>
-              <CardContent className="space-y-4">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={signInEmail}
-                  onChange={(e) => setSignInEmail(e.target.value)}
-                  required
-                />
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={signInPassword}
-                  onChange={(e) => setSignInPassword(e.target.value)}
-                  required
-                />
+              <CardContent className="space-y-4 px-0 pt-4 pb-3 bg-gradient-to-br from-brand-blue-light/5 via-white to-brand-green-light/5 rounded-lg">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <span className="text-brand-blue-DEFAULT">📧</span>
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={signInEmail}
+                    onChange={(e) => setSignInEmail(e.target.value)}
+                    required
+                    className="border-2 border-slate-200 focus:border-brand-blue-DEFAULT focus:ring-2 focus:ring-brand-blue-light/20 transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <span className="text-brand-green-DEFAULT">🔒</span>
+                    Password
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={signInPassword}
+                    onChange={(e) => setSignInPassword(e.target.value)}
+                    required
+                    className="border-2 border-slate-200 focus:border-brand-green-DEFAULT focus:ring-2 focus:ring-brand-green-light/20 transition-all"
+                  />
+                </div>
               </CardContent>
-              <CardFooter className="flex gap-2">
+              <CardFooter className="flex gap-2 px-0 pt-4 pb-0">
                 <Button
                   type="button"
                   variant="outline"
@@ -193,7 +223,11 @@ export function AuthModal({ onClose }: AuthModalProps) {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading} className="flex-1">
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="flex-1 bg-gradient-brand hover:opacity-90 text-white"
+                >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign In
                 </Button>
@@ -201,37 +235,61 @@ export function AuthModal({ onClose }: AuthModalProps) {
             </form>
           </TabsContent>
 
-          <TabsContent value="signup">
+          <TabsContent value="signup" className="px-6 pb-6">
             <form onSubmit={handleSignUp}>
-              <CardContent className="space-y-4">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={signUpEmail}
-                  onChange={(e) => setSignUpEmail(e.target.value)}
-                  required
-                />
-                <Input
-                  type="password"
-                  placeholder="Password (min 8 characters)"
-                  value={signUpPassword}
-                  onChange={(e) => setSignUpPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
-                <Input
-                  type="password"
-                  placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
-                <p className="text-xs text-slate-500">
-                  Password must contain: uppercase, lowercase, and number
-                </p>
+              <CardContent className="space-y-3 px-0 pt-4 pb-3 bg-gradient-to-br from-brand-green-light/5 via-white to-brand-blue-light/5 rounded-lg">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <span className="text-brand-blue-DEFAULT">📧</span>
+                    Email
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={signUpEmail}
+                    onChange={(e) => setSignUpEmail(e.target.value)}
+                    required
+                    className="border-2 border-slate-200 focus:border-brand-blue-DEFAULT focus:ring-2 focus:ring-brand-blue-light/20 transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <span className="text-brand-green-DEFAULT">🔒</span>
+                    Password
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="Min 8 characters"
+                    value={signUpPassword}
+                    onChange={(e) => setSignUpPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className="border-2 border-slate-200 focus:border-brand-green-DEFAULT focus:ring-2 focus:ring-brand-green-light/20 transition-all"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                    <span className="text-brand-teal-DEFAULT">✓</span>
+                    Confirm Password
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className="border-2 border-slate-200 focus:border-brand-teal-DEFAULT focus:ring-2 focus:ring-brand-teal-light/20 transition-all"
+                  />
+                </div>
+                <div className="flex items-start gap-2 bg-brand-blue-light/10 border border-brand-blue-light/30 rounded-md p-2">
+                  <span className="text-sm">ℹ️</span>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    Password must contain: uppercase, lowercase, and number
+                  </p>
+                </div>
               </CardContent>
-              <CardFooter className="flex gap-2">
+              <CardFooter className="flex gap-2 px-0 pt-4 pb-0">
                 <Button
                   type="button"
                   variant="outline"
@@ -240,7 +298,11 @@ export function AuthModal({ onClose }: AuthModalProps) {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading} className="flex-1">
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="flex-1 bg-gradient-brand hover:opacity-90 text-white"
+                >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Sign Up
                 </Button>

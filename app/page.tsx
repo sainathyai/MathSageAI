@@ -13,6 +13,11 @@ export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [newChatKey, setNewChatKey] = useState(0)
   const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const [currentSession, setCurrentSession] = useState<{
+    sessionId: string
+    title: string
+    messageCount: number
+  } | null>(null)
   const { isAuthenticated, loading } = useAuth()
 
   // Show welcome modal on first visit (check localStorage)
@@ -29,6 +34,7 @@ export default function Home() {
   const handleNewChat = () => {
     // Force ChatContainer to reset by changing key
     setNewChatKey(prev => prev + 1)
+    setCurrentSession(null) // Clear current session
   }
 
   return (
@@ -42,11 +48,15 @@ export default function Home() {
           isOpen={isSidebarOpen} 
           onClose={() => setIsSidebarOpen(false)}
           onNewChat={handleNewChat}
+          currentSession={currentSession}
         />
         
         {/* Chat area - takes all remaining horizontal space */}
         <main className="flex-1 overflow-hidden w-full">
-          <ChatContainer key={newChatKey} />
+          <ChatContainer 
+            key={newChatKey} 
+            onSessionUpdate={setCurrentSession}
+          />
         </main>
       </div>
 

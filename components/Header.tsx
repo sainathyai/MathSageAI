@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Plus, Menu, HelpCircle, Info, LogIn, LogOut, User } from 'lucide-react'
+import { BookOpen, Menu, LogIn, LogOut, User } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { AuthModal } from '@/components/auth/AuthModal'
@@ -81,12 +81,6 @@ export function Header({ className = '' }: HeaderProps) {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center space-x-3">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/help">
-              <HelpCircle className="h-5 w-5" />
-            </Link>
-          </Button>
-          
           {isAuthenticated ? (
             <>
               <Button variant="ghost" size="sm" className="gap-2">
@@ -114,11 +108,6 @@ export function Header({ className = '' }: HeaderProps) {
               Sign In
             </Button>
           )}
-
-          <Button className="bg-gradient-brand hover:opacity-90 text-white border-0 shadow-md">
-            <Plus className="mr-2 h-4 w-4" />
-            New Problem
-          </Button>
         </div>
 
         {/* Mobile Menu Button */}
@@ -154,13 +143,6 @@ export function Header({ className = '' }: HeaderProps) {
             >
               About
             </Link>
-            <Link 
-              href="/help" 
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              Help
-            </Link>
-            
             {isAuthenticated ? (
               <>
                 <div className="text-sm text-slate-600 py-2">
@@ -185,11 +167,6 @@ export function Header({ className = '' }: HeaderProps) {
                 Sign In
               </Button>
             )}
-
-            <Button className="w-full bg-gradient-brand hover:opacity-90 text-white border-0 shadow-md">
-              <Plus className="mr-2 h-4 w-4" />
-              New Problem
-            </Button>
           </nav>
         </div>
       )}

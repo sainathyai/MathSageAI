@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, forwardRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Image as ImageIcon, X } from 'lucide-react'
@@ -11,12 +11,12 @@ interface ChatInputProps {
   disabled?: boolean
 }
 
-export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
-  const [message, setMessage] = useState('')
-  const [selectedImage, setSelectedImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
+  ({ onSendMessage, disabled = false }, ref) => {
+    const [message, setMessage] = useState('')
+    const [selectedImage, setSelectedImage] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -148,7 +148,9 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-    textareaRef.current?.focus()
+    if (ref && 'current' in ref && ref.current) {
+      ref.current.focus()
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -186,7 +188,7 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
         <div className="flex items-end gap-2">
           <div className="flex-1 relative">
             <Textarea
-              ref={textareaRef}
+              ref={ref}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -237,5 +239,7 @@ export function ChatInput({ onSendMessage, disabled = false }: ChatInputProps) {
       </div>
     </div>
   )
-}
+})
+
+ChatInput.displayName = 'ChatInput'
 

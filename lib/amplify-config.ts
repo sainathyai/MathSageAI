@@ -1,11 +1,19 @@
 import { Amplify } from 'aws-amplify'
 
 export function configureAmplify() {
+  const userPoolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID
+  const userPoolClientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID
+
+  if (!userPoolId || !userPoolClientId) {
+    console.warn('Cognito configuration missing. Authentication will not work.')
+    return
+  }
+
   Amplify.configure({
     Auth: {
       Cognito: {
-        userPoolId: process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID || '',
-        userPoolClientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID || '',
+        userPoolId,
+        userPoolClientId,
         loginWith: {
           email: true,
         },
@@ -15,7 +23,6 @@ export function configureAmplify() {
             required: true,
           },
         },
-        allowGuestAccess: true,
         passwordFormat: {
           minLength: 8,
           requireLowercase: true,
@@ -26,7 +33,7 @@ export function configureAmplify() {
       },
     },
   }, {
-    ssr: true, // Enable SSR support for Next.js
+    ssr: true,
   })
 }
 

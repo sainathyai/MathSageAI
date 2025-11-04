@@ -14,9 +14,14 @@ interface SidebarProps {
   isOpen: boolean
   onClose?: () => void
   onNewChat?: () => void
+  currentSession?: {
+    sessionId: string
+    title: string
+    messageCount: number
+  } | null
 }
 
-export function Sidebar({ isOpen, onClose, onNewChat }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarProps) {
   const { isAuthenticated, user } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [sessions, setSessions] = useState<SessionData[]>([])
@@ -37,6 +42,29 @@ export function Sidebar({ isOpen, onClose, onNewChat }: SidebarProps) {
       setSessions([])
     }
   }, [isAuthenticated, user])
+
+  // Merge current session with fetched sessions
+  const displaySessions = () => {
+    if (!currentSession) return sessions
+
+    // Filter out current session from fetched sessions (if it exists)
+    const otherSessions = sessions.filter(s => s.sessionId !== currentSession.sessionId)
+    
+    // Create current session display object
+    const currentSessionDisplay: SessionData = {
+      sessionId: currentSession.sessionId,
+      title: currentSession.title,
+      messages: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isGuest: !isAuthenticated,
+    }
+
+    // Return current session at top, followed by others
+    return [currentSessionDisplay, ...otherSessions]
+  }
+
+  const sessionsToDisplay = displaySessions()
 
   return (
     <>
@@ -85,41 +113,47 @@ export function Sidebar({ isOpen, onClose, onNewChat }: SidebarProps) {
               <div className="text-center py-4">
                 <p className="text-sm text-slate-500">Loading sessions...</p>
               </div>
-            ) : sessions.length === 0 ? (
+            ) : sessionsToDisplay.length === 0 ? (
               <div className="text-center py-4">
                 <p className="text-sm text-slate-500">No sessions yet</p>
                 <p className="text-xs text-slate-400 mt-1">Start chatting to create your first session</p>
               </div>
             ) : (
-              sessions.map((session, index) => (
-                <button
-                  key={session.sessionId}
-                  className={cn(
-                    "group w-full rounded-lg p-3 text-left transition-colors hover:bg-gradient-brand hover:bg-opacity-10",
-                    index === 0 && "bg-gradient-brand bg-opacity-10"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <MessageSquare className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
-                        {session.title}
-                      </p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Clock className="h-3 w-3 text-slate-400" />
-                        <p className="text-xs text-slate-500">
-                          {formatTimestamp(session.updatedAt)}
-                        </p>
-                      </div>
-                    </div>
-                    {index === 0 && (
-                      <Badge variant="secondary" className="ml-auto flex-shrink-0">
-                        Recent
-                      </Badge>
+              sessionsToDisplay.map((session, index) => {
+                const isCurrentSession = currentSession && session.sessionId === currentSession.sessionId
+                return (
+                  <button
+                    key={session.sessionId}
+                    className={cn(
+                      "group w-full rounded-lg p-3 text-left transition-colors hover:bg-gradient-brand hover:bg-opacity-10",
+                      isCurrentSession && "bg-gradient-brand bg-opacity-10 border-2 border-brand-blue-DEFAULT/30"
                     )}
-                  </div>
-                </button>
-              ))
+                  >
+                    <div className="flex items-start gap-3">
+                      <MessageSquare className={cn(
+                        "h-4 w-4 mt-0.5 flex-shrink-0",
+                        isCurrentSession ? "text-brand-blue-DEFAULT" : "text-slate-400"
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900 truncate">
+                          {session.title}
+                        </p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Clock className="h-3 w-3 text-slate-400" />
+                          <p className="text-xs text-slate-500">
+                            {isCurrentSession ? 'Active now' : formatTimestamp(session.updatedAt)}
+                          </p>
+                        </div>
+                      </div>
+                      {isCurrentSession && (
+                        <Badge className="ml-auto flex-shrink-0 bg-gradient-brand text-white border-0">
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+                )
+              })
             )}
           </div>
           

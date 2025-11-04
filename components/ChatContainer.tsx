@@ -12,12 +12,21 @@ import { saveSession, generateSessionTitle } from '@/lib/session-manager'
 import { uploadImageToS3 } from '@/lib/image-upload'
 import { useToast } from '@/hooks/use-toast'
 
-export function ChatContainer() {
+interface ChatContainerProps {
+  onSessionUpdate?: (session: {
+    sessionId: string
+    title: string
+    messageCount: number
+  }) => void
+}
+
+export function ChatContainer({ onSessionUpdate }: ChatContainerProps = {}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [sessionId] = useState<string>(() => uuidv4())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const { user, isAuthenticated } = useAuth()
   const { toast } = useToast()
 
@@ -65,10 +74,19 @@ export function ChatContainer() {
         updatedAt: now,
         isGuest: !isAuthenticated,
       })
+
+      // Update parent component with current session info
+      if (onSessionUpdate) {
+        onSessionUpdate({
+          sessionId,
+          title,
+          messageCount: messages.length,
+        })
+      }
     }
 
     saveCurrentSession()
-  }, [messages, sessionId, user, isAuthenticated])
+  }, [messages, sessionId, user, isAuthenticated, onSessionUpdate])
 
   const handleSendMessage = async (content: string, image?: File) => {
     // Add user message
@@ -229,11 +247,12 @@ export function ChatContainer() {
       
       setMessages(prev => [...prev, aiMessage])
       
-      // Scroll to bottom after AI response is added
-      // Use requestAnimationFrame to ensure DOM is updated
+      // Scroll to bottom and focus input after AI response
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           scrollToBottom()
+          // Focus the input field so user can immediately type next question
+          inputRef.current?.focus()
         })
       })
     } catch (error) {
@@ -330,13 +349,14 @@ export function ChatContainer() {
         )}
       </div>
 
-      {/* Input Area - fixed at bottom */}
-      <div className="flex-none w-full z-10">
-        <ChatInput 
-          onSendMessage={handleSendMessage}
-          disabled={isLoading}
-        />
-      </div>
+          {/* Input Area - fixed at bottom */}
+          <div className="flex-none w-full z-10">
+            <ChatInput
+              ref={inputRef}
+              onSendMessage={handleSendMessage}
+              disabled={isLoading}
+            />
+          </div>
     </div>
   )
 }
