@@ -9,6 +9,8 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
 import { AuthModal } from '@/components/auth/AuthModal'
 import { getUserSessions, formatTimestamp, SessionData } from '@/lib/session-manager'
+import { renderMathContent } from '@/app/utils/mathRenderer'
+import 'katex/dist/katex.min.css'
 
 interface SidebarProps {
   isOpen: boolean
@@ -135,9 +137,9 @@ export function Sidebar({ isOpen, onClose, onNewChat, currentSession }: SidebarP
                         isCurrentSession ? "text-brand-blue-DEFAULT" : "text-slate-400"
                       )} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">
-                          {session.title}
-                        </p>
+                        <div className="text-sm font-medium text-slate-900 truncate">
+                          {renderMathContent(session.title)}
+                        </div>
                         <div className="flex items-center gap-1 mt-1">
                           <Clock className="h-3 w-3 text-slate-400" />
                           <p className="text-xs text-slate-500">
