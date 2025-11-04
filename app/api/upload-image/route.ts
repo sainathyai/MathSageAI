@@ -63,9 +63,7 @@ export async function POST(request: NextRequest) {
         Key: s3Key,
         Body: buffer,
         ContentType: file.type,
-        // Make the image publicly readable (required for display)
-        // Alternative: use signed URLs for private images
-        ACL: 'public-read',
+        // Images are publicly readable via bucket policy
         Metadata: {
           originalName: file.name,
           uploadedAt: new Date().toISOString(),
