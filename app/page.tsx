@@ -1,15 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { Sidebar } from '@/components/Sidebar'
 import { ChatContainer } from '@/components/ChatContainer'
 import { Toaster } from '@/components/ui/toaster'
+import { WelcomeModal } from '@/components/auth/WelcomeModal'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Home() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [newChatKey, setNewChatKey] = useState(0)
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false)
+  const { isAuthenticated, loading } = useAuth()
+
+  // Show welcome modal on first visit (check localStorage)
+  useEffect(() => {
+    if (!loading) {
+      const hasVisited = localStorage.getItem('mathsage_visited')
+      if (!hasVisited && !isAuthenticated) {
+        setShowWelcomeModal(true)
+        localStorage.setItem('mathsage_visited', 'true')
+      }
+    }
+  }, [loading, isAuthenticated])
 
   const handleNewChat = () => {
     // Force ChatContainer to reset by changing key
@@ -38,6 +53,9 @@ export default function Home() {
       {/* Footer - positioned below the viewport, visible on scroll */}
       <Footer className="flex-none" />
       <Toaster />
+      
+      {/* Welcome Modal - shown on first visit */}
+      {showWelcomeModal && <WelcomeModal onClose={() => setShowWelcomeModal(false)} />}
     </div>
   )
 }

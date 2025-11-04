@@ -6,13 +6,20 @@ import { Message } from '@/app/types'
 import { ChatInput } from './ChatInput'
 import { WelcomeScreen } from './WelcomeScreen'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/contexts/AuthContext'
+import { v4 as uuidv4 } from 'uuid'
+import { saveSession, generateSessionTitle } from '@/lib/session-manager'
+import { uploadImageToS3 } from '@/lib/image-upload'
+import { useToast } from '@/hooks/use-toast'
 
 export function ChatContainer() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [sessionId] = useState<string>(() => uuidv4())
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const { user, isAuthenticated } = useAuth()
+  const { toast } = useToast()
 
   const scrollToBottom = () => {
     // Use scrollTop instead of scrollIntoView to avoid layout shifts
@@ -41,6 +48,28 @@ export function ChatContainer() {
     }
   }, [messages])
 
+  // Save session whenever messages change
+  useEffect(() => {
+    if (messages.length === 0) return
+
+    const saveCurrentSession = async () => {
+      const title = generateSessionTitle(messages)
+      const now = new Date().toISOString()
+
+      await saveSession({
+        sessionId,
+        userId: user?.userId,
+        title,
+        messages,
+        createdAt: now,
+        updatedAt: now,
+        isGuest: !isAuthenticated,
+      })
+    }
+
+    saveCurrentSession()
+  }, [messages, sessionId, user, isAuthenticated])
+
   const handleSendMessage = async (content: string, image?: File) => {
     // Add user message
     const userMessage: Message = {
@@ -48,25 +77,28 @@ export function ChatContainer() {
       role: 'user',
       content,
       timestamp: new Date(),
-      imageUrl: image ? URL.createObjectURL(image) : undefined
+      imageUrl: undefined // Will be set after S3 upload
     }
 
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
     try {
-      // If image is provided, parse it first
+      // If image is provided, upload to S3 and parse it
       let problemContent = content
       if (image) {
         try {
-          // Log image details before sending
-          console.log('📤 Sending image to parse:', {
-            fileName: image.name,
-            fileType: image.type,
-            fileSize: image.size,
-            fileExtension: image.name.split('.').pop()?.toLowerCase(),
-          })
+          // Upload to S3 first
+          const s3Url = await uploadImageToS3(image, sessionId, user?.userId)
+          console.log('✅ Image uploaded to S3:', s3Url)
           
+          // Update user message with S3 URL
+          userMessage.imageUrl = s3Url
+          setMessages(prev => prev.map(msg => 
+            msg.id === userMessage.id ? { ...msg, imageUrl: s3Url } : msg
+          ))
+          
+          // Parse image with OpenAI Vision
           const imageBase64 = await fileToBase64(image)
           
           // Log base64 data info (first 100 chars to avoid spam)

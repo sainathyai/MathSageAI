@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
 import { getAwsConfig, env } from '@/lib/env'
-import { Session } from '@/app/types'
+import { SessionData } from '@/lib/session-manager'
 
 const client = new DynamoDBClient(getAwsConfig())
 const docClient = DynamoDBDocumentClient.from(client)
@@ -12,7 +12,7 @@ const docClient = DynamoDBDocumentClient.from(client)
  */
 export async function POST(request: NextRequest) {
   try {
-    const session: Session = await request.json()
+    const session: SessionData = await request.json()
 
     if (!session.sessionId) {
       return NextResponse.json(
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
     // Add timestamps
     const now = new Date().toISOString()
-    const sessionData: Session = {
+    const sessionData: SessionData = {
       ...session,
       updatedAt: now,
       createdAt: session.createdAt || now,

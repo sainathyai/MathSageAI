@@ -3,18 +3,12 @@
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { MessageSquare, Plus, Settings, Trash2, Clock, Lock } from 'lucide-react'
+import { MessageSquare, Plus, Settings, Trash2, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AuthModal } from '@/components/auth/AuthModal'
-
-interface Session {
-  id: string
-  title: string
-  timestamp: string
-  isActive: boolean
-}
+import { getUserSessions, formatTimestamp, SessionData } from '@/lib/session-manager'
 
 interface SidebarProps {
   isOpen: boolean
@@ -22,16 +16,27 @@ interface SidebarProps {
   onNewChat?: () => void
 }
 
-// Mock data for demonstration
-const sessions: Session[] = [
-  { id: '1', title: 'Solving 2x + 5 = 13', timestamp: '2 minutes ago', isActive: true },
-  { id: '2', title: 'Quadratic equation', timestamp: '1 hour ago', isActive: false },
-  { id: '3', title: 'Area of a circle', timestamp: 'Yesterday', isActive: false },
-]
-
 export function Sidebar({ isOpen, onClose, onNewChat }: SidebarProps) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [sessions, setSessions] = useState<SessionData[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // Fetch user sessions when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.userId) {
+      setLoading(true)
+      getUserSessions(user.userId)
+        .then(setSessions)
+        .catch(error => {
+          console.error('Failed to load sessions:', error)
+          setSessions([])
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setSessions([])
+    }
+  }, [isAuthenticated, user])
 
   return (
     <>
@@ -66,64 +71,63 @@ export function Sidebar({ isOpen, onClose, onNewChat }: SidebarProps) {
 
         {/* Session History - fills available space */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-4 pt-2 pb-2">
-          {isAuthenticated ? (
-            <>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-semibold text-slate-900">Recent Sessions</h3>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Trash2 className="h-4 w-4 text-slate-500" />
-                </Button>
-              </div>
-
-              <div className="space-y-1.5">
-                {sessions.map((session) => (
-                  <button
-                    key={session.id}
-                    className={cn(
-                      "group w-full rounded-lg p-3 text-left transition-colors hover:bg-gradient-brand hover:bg-opacity-10",
-                      session.isActive && "bg-gradient-brand bg-opacity-10"
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      <MessageSquare className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 truncate">
-                          {session.title}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <Clock className="h-3 w-3 text-slate-400" />
-                          <p className="text-xs text-slate-500">
-                            {session.timestamp}
-                          </p>
-                        </div>
-                      </div>
-                      {session.isActive && (
-                        <Badge variant="secondary" className="ml-auto flex-shrink-0">
-                          Active
-                        </Badge>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <Lock className="h-12 w-12 text-slate-300 mb-4" />
-              <h3 className="text-sm font-semibold text-slate-900 mb-2">
-                Sign in to view history
-              </h3>
-              <p className="text-xs text-slate-600 mb-4">
-                Save your conversations and track your progress
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setShowAuthModal(true)}
-                className="w-full"
-              >
-                Sign In
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-900">Recent Sessions</h3>
+            {isAuthenticated && (
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Trash2 className="h-4 w-4 text-slate-500" />
               </Button>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            {loading ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-slate-500">Loading sessions...</p>
+              </div>
+            ) : sessions.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-slate-500">No sessions yet</p>
+                <p className="text-xs text-slate-400 mt-1">Start chatting to create your first session</p>
+              </div>
+            ) : (
+              sessions.map((session, index) => (
+                <button
+                  key={session.sessionId}
+                  className={cn(
+                    "group w-full rounded-lg p-3 text-left transition-colors hover:bg-gradient-brand hover:bg-opacity-10",
+                    index === 0 && "bg-gradient-brand bg-opacity-10"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900 truncate">
+                        {session.title}
+                      </p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Clock className="h-3 w-3 text-slate-400" />
+                        <p className="text-xs text-slate-500">
+                          {formatTimestamp(session.updatedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    {index === 0 && (
+                      <Badge variant="secondary" className="ml-auto flex-shrink-0">
+                        Recent
+                      </Badge>
+                    )}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+          
+          {!isAuthenticated && (
+            <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-brand-blue-light/10 to-brand-green-light/10 border border-brand-blue-light/20">
+              <p className="text-xs text-slate-600 text-center">
+                <strong>Tip:</strong> Sign in to save your progress and access history across devices
+              </p>
             </div>
           )}
         </div>
