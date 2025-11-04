@@ -14,11 +14,13 @@ export interface Message {
 
 export interface Session {
   id: string
+  userId?: string // Cognito user ID (optional for guest sessions)
   title: string
   messages: Message[]
   createdAt: Date
   updatedAt: Date
   problem?: string
+  isGuest?: boolean // True if session belongs to unauthenticated user
 }
 
 /**

@@ -1,0 +1,4 @@
+# Copy this command and replace YOUR_OPENAI_KEY_HERE with your actual key, then run it:
+
+aws amplify update-app --app-id d2ohw6j2qrh9l8 --environment-variables "OPENAI_API_KEY=YOUR_OPENAI_KEY_HERE,DYNAMODB_TABLE_NAME=mathsage-sessions,S3_BUCKET_NAME=mathsage-images-971422717446,NEXT_PUBLIC_APP_URL=https://master.d2ohw6j2qrh9l8.amplifyapp.com" --region us-east-1
+

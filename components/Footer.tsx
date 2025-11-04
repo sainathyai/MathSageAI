@@ -95,7 +95,7 @@ export function Footer({ className = '' }: FooterProps) {
               </li>
               <li>
                 <a 
-                  href="mailto:support@mathsageai.com" 
+                  href="mailto:support@mathsageai.sainathyai.com" 
                   className="text-sm text-slate-600 hover:text-brand-blue-dark transition-colors flex items-center gap-2"
                 >
                   <Mail className="h-4 w-4" />
