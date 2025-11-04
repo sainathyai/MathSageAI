@@ -110,9 +110,20 @@ export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContai
     }
   }, [messages])
 
-  // Save session whenever messages change
+  // Save session whenever messages change (ONLY for authenticated users)
   useEffect(() => {
     if (messages.length === 0) return
+    
+    // ONLY save sessions for authenticated users with a valid userId
+    // Skip guest sessions entirely - don't persist them
+    if (!isAuthenticated || !user?.userId) {
+      console.log('⏭️  Skipping session save (guest or user not loaded):', { 
+        isAuthenticated, 
+        hasUserId: !!user?.userId,
+        messageCount: messages.length 
+      })
+      return
+    }
 
     const saveCurrentSession = async () => {
       const title = generateSessionTitle(messages)
@@ -120,14 +131,18 @@ export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContai
 
       const sessionData = {
         sessionId,
-        userId: user?.userId,
+        userId: user.userId, // Now guaranteed to exist
         title,
         messages,
         createdAt: now,
         updatedAt: now,
-        isGuest: !isAuthenticated,
+        isGuest: false, // Always false since we only save authenticated sessions
       }
-      console.log('💾 Saving session:', { sessionId, userId: user?.userId, messageCount: messages.length, isGuest: !isAuthenticated })
+      console.log('💾 Saving authenticated session:', { 
+        sessionId, 
+        userId: user.userId, 
+        messageCount: messages.length 
+      })
       await saveSession(sessionData)
 
       // Update parent component with current session info
