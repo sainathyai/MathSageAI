@@ -1,0 +1,60 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - feature/advanced-features
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            # Navigate to project directory
+            cd /home/ubuntu/MathSageAI || cd ~/MathSageAI || exit 1
+            
+            # Pull latest code
+            echo "Pulling latest code from GitHub..."
+            git fetch origin
+            git checkout ${{ github.ref_name }}
+            git pull origin ${{ github.ref_name }}
+            
+            # Install dependencies
+            echo "Installing dependencies..."
+            npm ci
+            
+            # Build the project
+            echo "Building project..."
+            npm run build
+            
+            # Restart the PM2 service
+            echo "Restarting application..."
+            pm2 restart mathsageai || pm2 start npm --name "mathsageai" -- start
+            
+            # Save PM2 configuration
+            pm2 save
+            
+            echo "Deployment completed successfully!"
+      
+      - name: Deployment Status
+        if: success()
+        run: echo "✅ Deployment to EC2 completed successfully!"
+      
+      - name: Deployment Failed
+        if: failure()
+        run: echo "❌ Deployment to EC2 failed!"
+
