@@ -4,12 +4,18 @@
 
 export type MessageRole = 'user' | 'assistant' | 'system'
 
+import { DrawingCommand } from './drawing'
+
 export interface Message {
   id: string
   role: MessageRole
   content: string
   timestamp: Date
   imageUrl?: string
+  isCorrect?: boolean // True if the user's answer is correct
+  isPartiallyCorrect?: boolean // True if the answer is on the right track
+  drawingCommands?: DrawingCommand[]
+  clearCanvas?: boolean
 }
 
 export interface Session {

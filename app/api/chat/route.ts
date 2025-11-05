@@ -6,6 +6,8 @@ import { selectStrategy } from '@/app/utils/context/strategySelector'
 import { buildAdaptivePrompt } from '@/app/utils/context/promptBuilder'
 import { validateResponseQuality } from '@/app/utils/responseValidator'
 import { Message } from '@/app/types'
+import { VISUAL_TEACHING_PROMPT } from '@/app/utils/visualTeachingPrompt'
+import { DrawingCommand } from '@/app/types/drawing'
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -86,6 +88,9 @@ ABSOLUTE RULES - NEVER VIOLATE THESE:
 6. Focus on understanding "why" before "how"
 7. Celebrate effort and progress, not just correctness`
     }
+    
+    // Append visual teaching capabilities to the adaptive prompt
+    adaptivePrompt += '\n\n' + VISUAL_TEACHING_PROMPT
     
     // Prepare messages for OpenAI (including adaptive system message)
     const openaiMessages = [
@@ -169,9 +174,31 @@ ABSOLUTE RULES - NEVER VIOLATE THESE:
       })
     }
 
+    // Detect if the AI is confirming a correct answer
+    const correctnessAnalysis = analyzeCorrectness(response, messages)
+    
+    // Extract drawing commands if present
+    const drawingData = extractDrawingCommands(response)
+    
+    // Debug logging
+    if (drawingData.commands && drawingData.commands.length > 0) {
+      console.log('🎨 Drawing commands extracted:', {
+        commandCount: drawingData.commands.length,
+        clearCanvas: drawingData.clearCanvas,
+        commands: JSON.stringify(drawingData.commands, null, 2)
+      })
+    } else {
+      console.log('⚠️ No drawing commands found in response')
+      console.log('Response excerpt:', response.substring(0, 500))
+    }
+
     return NextResponse.json({
-      message: response,
+      message: drawingData.message,
+      commands: drawingData.commands,
+      clearCanvas: drawingData.clearCanvas,
       sessionId: sessionId || null,
+      isCorrect: correctnessAnalysis.isCorrect,
+      isPartiallyCorrect: correctnessAnalysis.isPartiallyCorrect,
     })
   } catch (error) {
     console.error('Chat API error:', error)
@@ -219,6 +246,42 @@ ABSOLUTE RULES - NEVER VIOLATE THESE:
       },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Analyze if the AI response is confirming a correct or partially correct answer
+ * Returns correctness indicators based on the AI's language
+ */
+function analyzeCorrectness(response: string, messages: any[]): { isCorrect: boolean; isPartiallyCorrect: boolean } {
+  const lowerResponse = response.toLowerCase()
+
+  // Strong positive confirmation patterns (definitely correct)
+  const correctPatterns = [
+    /\b(excellent|perfect|exactly|absolutely|correct|right|yes|well done|great job|fantastic|wonderful|brilliant|outstanding|spot on|precisely|bingo)\b.*\!/,
+    /\b(that'?s correct|that'?s right|you got it|you'?re right|correct)\b/,
+    /\b(excellent work|great thinking|good job|well done)\b/,
+    /\b(yes.*correct|yes.*right|exactly right|exactly correct)\b/,
+    /\b(perfect|excellent|outstanding|brilliant|fantastic|wonderful)\b/,
+  ]
+
+  // Partial correctness patterns (on the right track)
+  const partialPatterns = [
+    /\b(you'?re (on the|getting) (right|correct) track|on the right path|good (start|thinking|observation|progress))\b/,
+    /\b(close|almost|nearly|not quite|partially correct|you'?re getting (there|close|warmer))\b/,
+    /\b(that'?s a good (idea|thought|start|observation))\b/,
+    /\b(you'?re thinking (in the right|along the right) (direction|lines))\b/,
+  ]
+
+  // Check for correct patterns
+  const isCorrect = correctPatterns.some(pattern => pattern.test(lowerResponse))
+
+  // Check for partial patterns (only if not already correct)
+  const isPartiallyCorrect = !isCorrect && partialPatterns.some(pattern => pattern.test(lowerResponse))
+
+  return {
+    isCorrect,
+    isPartiallyCorrect,
   }
 }
 
@@ -304,5 +367,91 @@ function validateResponse(response: string): { isValid: boolean; reason?: string
   }
 
   return { isValid: true }
+}
+
+/**
+ * Extract drawing commands from AI response
+ * Looks for ```drawing-commands JSON blocks and parses them
+ */
+function extractDrawingCommands(response: string): {
+  message: string
+  commands?: DrawingCommand[]
+  clearCanvas?: boolean
+} {
+  console.log('🔍 Extracting drawing commands from response...')
+  console.log('Response length:', response.length)
+  
+  // Method 1: Look for ```drawing-commands code block
+  const drawingRegex = /```drawing-commands\s*\n([\s\S]*?)\n```/g
+  let match = drawingRegex.exec(response)
+  
+  if (match) {
+    console.log('✅ Found drawing-commands code block')
+    console.log('Raw JSON:', match[1].substring(0, 500))
+    
+    try {
+      const commandsJson = JSON.parse(match[1])
+      console.log('✅ Successfully parsed JSON from code block')
+      console.log('Commands:', commandsJson.commands?.length || 0)
+      console.log('Clear canvas:', commandsJson.clearCanvas)
+      
+      const cleanedMessage = response.replace(drawingRegex, '').trim()
+      
+      return {
+        message: cleanedMessage,
+        commands: commandsJson.commands,
+        clearCanvas: commandsJson.clearCanvas
+      }
+    } catch (error) {
+      console.error('❌ Error parsing drawing commands JSON:', error)
+    }
+  }
+  
+  // Method 2: Look for raw JSON with "clearCanvas" and "commands" keys
+  console.log('🔍 Looking for raw JSON object...')
+  const rawJsonRegex = /\{[\s\S]*?"clearCanvas"[\s\S]*?"commands"[\s\S]*?\}/
+  const rawMatch = rawJsonRegex.exec(response)
+  
+  if (rawMatch) {
+    console.log('✅ Found raw JSON object')
+    console.log('Raw JSON preview:', rawMatch[0].substring(0, 500))
+    
+    try {
+      // Extract the full JSON object (handle nested braces)
+      let braceCount = 0
+      let startIndex = rawMatch.index
+      let endIndex = startIndex
+      
+      for (let i = startIndex; i < response.length; i++) {
+        if (response[i] === '{') braceCount++
+        if (response[i] === '}') braceCount--
+        if (braceCount === 0 && response[i] === '}') {
+          endIndex = i + 1
+          break
+        }
+      }
+      
+      const jsonStr = response.substring(startIndex, endIndex)
+      const commandsJson = JSON.parse(jsonStr)
+      
+      console.log('✅ Successfully parsed raw JSON')
+      console.log('Commands:', commandsJson.commands?.length || 0)
+      console.log('Clear canvas:', commandsJson.clearCanvas)
+      
+      // Remove the JSON from the message
+      const cleanedMessage = response.replace(jsonStr, '').trim()
+      
+      return {
+        message: cleanedMessage,
+        commands: commandsJson.commands,
+        clearCanvas: commandsJson.clearCanvas
+      }
+    } catch (error) {
+      console.error('❌ Error parsing raw JSON:', error)
+    }
+  }
+  
+  console.log('❌ No drawing commands found in response')
+  return { message: response }
 }
 

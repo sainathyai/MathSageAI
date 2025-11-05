@@ -1,0 +1,32 @@
+[Unit]
+Description=MathSageAI Next.js Application
+Documentation=https://github.com/sainathyai/MathSageAI
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/MathSageAI
+Environment="NODE_ENV=production"
+Environment="PORT=3000"
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mathsageai
+
+# Resource limits
+LimitNOFILE=65536
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
+
+
+
+

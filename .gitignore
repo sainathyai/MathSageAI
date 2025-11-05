@@ -101,3 +101,14 @@ out/
 # Sentry
 .sentryclirc
 
+# EC2 deployment
+mathsageai-ec2-key.pem
+*.pem
+deploy-ec2.sh
+nginx-mathsageai.conf
+dns-change-batch.json
+
+# Test/temporary files
+restore-session.json
+restore-values.json
+

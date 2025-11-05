@@ -3,20 +3,36 @@
 import { useState, useRef, forwardRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Send, Image as ImageIcon, X } from 'lucide-react'
+import { Send, Image as ImageIcon, X, HelpCircle, Lightbulb, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface ChatInputProps {
   onSendMessage: (message: string, image?: File) => void
   disabled?: boolean
+  showSuggestions?: boolean
 }
 
+const suggestedResponses = [
+  { text: "I don't know", icon: HelpCircle, color: "text-amber-600 bg-amber-50 hover:bg-amber-100 border-amber-200" },
+  { text: "Give me a hint", icon: Lightbulb, color: "text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border-emerald-200" },
+  { text: "I'm unsure", icon: Info, color: "text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border-indigo-200" },
+  { text: "Can you explain more?", icon: HelpCircle, color: "text-purple-600 bg-purple-50 hover:bg-purple-100 border-purple-200" },
+]
+
 export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
-  ({ onSendMessage, disabled = false }, ref) => {
+  ({ onSendMessage, disabled = false, showSuggestions = false }, ref) => {
     const [message, setMessage] = useState('')
     const [selectedImage, setSelectedImage] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+
+    const handleSuggestionClick = (suggestion: string) => {
+      setMessage(suggestion)
+      // Auto-focus the textarea so user can edit if needed
+      if (ref && 'current' in ref && ref.current) {
+        ref.current.focus()
+      }
+    }
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -163,6 +179,33 @@ export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(
   return (
     <div className="border-t border-slate-200/50 bg-gradient-input p-4 backdrop-blur-sm">
       <div className="container max-w-4xl mx-auto">
+        {/* Suggested Responses */}
+        {showSuggestions && !imagePreview && (
+          <div className="mb-3">
+            <p className="text-xs font-medium text-slate-500 mb-2">Quick responses:</p>
+            <div className="flex flex-wrap gap-2">
+              {suggestedResponses.map((suggestion, index) => {
+                const Icon = suggestion.icon
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion.text)}
+                    disabled={disabled}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                      suggestion.color,
+                      "hover:shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    )}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {suggestion.text}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Image Preview */}
         {imagePreview && (
           <div className="mb-3 relative inline-block">

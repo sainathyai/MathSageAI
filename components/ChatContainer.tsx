@@ -12,6 +12,8 @@ import { saveSession, generateSessionTitle } from '@/lib/session-manager'
 import { uploadImageToS3 } from '@/lib/image-upload'
 import { useToast } from '@/hooks/use-toast'
 import { getSession, SessionData } from '@/lib/session-manager'
+import { renderMathContent } from '@/app/utils/mathRenderer'
+import 'katex/dist/katex.min.css'
 
 interface ChatContainerProps {
   selectedSessionId?: string | null
@@ -308,6 +310,21 @@ export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContai
 
       const data = await response.json()
       
+      // Update the last user message with correctness feedback if available
+      if (data.isCorrect || data.isPartiallyCorrect) {
+        setMessages(prev => prev.map((msg, index) => {
+          // Find the last user message and update it with feedback
+          if (msg.role === 'user' && index === prev.length - 1) {
+            return {
+              ...msg,
+              isCorrect: data.isCorrect,
+              isPartiallyCorrect: data.isPartiallyCorrect,
+            }
+          }
+          return msg
+        }))
+      }
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -381,8 +398,32 @@ export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContai
     handleSendMessage(problem)
   }
 
+  // Extract the problem statement (first user message)
+  const problemStatement = messages.find(msg => msg.role === 'user')?.content || null
+
   return (
-    <div className="flex flex-col w-full h-full bg-gradient-chat">
+    <div className="flex flex-col w-full h-full bg-gradient-chat relative">
+      {/* Pinned Problem Statement - fixed at top when chat has started */}
+      {problemStatement && messages.length > 0 && (
+        <div className="sticky top-0 z-20 bg-gradient-to-b from-white to-slate-50/90 backdrop-blur-sm border-b border-slate-200/50 shadow-sm">
+          <div className="container max-w-4xl mx-auto px-4 py-3">
+            <div className="flex items-start gap-2">
+              <div className="flex-shrink-0 text-brand-blue-dark mt-1">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-slate-500 mb-1">Problem Statement</p>
+                <div className="text-lg font-semibold text-slate-900 leading-snug line-clamp-2">
+                  {renderMathContent(problemStatement)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Messages Area - scrollable, takes remaining space */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden chat-scrollbar">
         {loadingSession ? (
@@ -435,6 +476,7 @@ export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContai
               ref={inputRef}
               onSendMessage={handleSendMessage}
               disabled={isLoading || loadingSession}
+              showSuggestions={messages.length > 0}
             />
           </div>
     </div>

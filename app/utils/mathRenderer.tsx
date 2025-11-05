@@ -8,6 +8,11 @@ import React from 'react'
  * - Block math: \[...\] or $$...$$
  */
 export function renderMathContent(content: string): React.ReactNode[] {
+  // Handle null, undefined, or empty content
+  if (!content || typeof content !== 'string') {
+    return [content || '']
+  }
+
   const parts: React.ReactNode[] = []
   let lastIndex = 0
 
