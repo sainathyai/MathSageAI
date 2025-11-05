@@ -75,16 +75,17 @@ export function Header({ className = '', onAuthClick }: HeaderProps) {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
           <Link 
+            href="/how-it-works" 
+            className="text-sm font-semibold text-brand-blue-dark transition-colors hover:text-brand-blue-dark/80 relative group"
+          >
+            How It Works
+            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-brand-blue-dark transition-all group-hover:w-full"></span>
+          </Link>
+          <Link 
             href="/examples" 
             className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
           >
             Examples
-          </Link>
-          <Link 
-            href="/how-it-works" 
-            className="text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
-          >
-            How It Works
           </Link>
           <Link 
             href="/about" 
@@ -141,16 +142,16 @@ export function Header({ className = '', onAuthClick }: HeaderProps) {
         <div className="border-t border-slate-200 bg-white md:hidden">
           <nav className="container flex flex-col space-y-3 px-4 py-4">
             <Link 
+              href="/how-it-works" 
+              className="text-sm font-semibold text-brand-blue-dark hover:text-brand-blue-dark/80"
+            >
+              How It Works
+            </Link>
+            <Link 
               href="/examples" 
               className="text-sm font-medium text-slate-600 hover:text-slate-900"
             >
               Examples
-            </Link>
-            <Link 
-              href="/how-it-works" 
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              How It Works
             </Link>
             <Link 
               href="/about" 

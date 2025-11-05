@@ -1,7 +1,6 @@
 'use client'
 
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Calculator, Grid3x3, PieChart, FileText } from 'lucide-react'
 import { useState } from 'react'
 

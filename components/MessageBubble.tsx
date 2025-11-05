@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
-import { Bot, User } from 'lucide-react'
+import { Bot, User, CheckCircle2, Circle } from 'lucide-react'
 import { Message } from '@/app/types'
 import { useState } from 'react'
 import { renderMathContent } from '@/app/utils/mathRenderer'
@@ -68,6 +68,19 @@ export function MessageBubble({ message, isAnimated = false }: MessageBubbleProp
       )}>
         {/* Name & Timestamp */}
         <div className="flex items-center gap-2 mb-1">
+          {/* Visual feedback for user messages - moved before "You" text */}
+          {isUser && message.isCorrect && (
+            <div className="flex items-center gap-1">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <span className="text-xs font-medium text-emerald-600">Correct!</span>
+            </div>
+          )}
+          {isUser && message.isPartiallyCorrect && (
+            <div className="flex items-center gap-1">
+              <Circle className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-medium text-amber-600">Good progress</span>
+            </div>
+          )}
           <span className="text-xs font-medium text-slate-900">
             {isUser ? 'You' : 'MathSage AI 🦉'}
           </span>
