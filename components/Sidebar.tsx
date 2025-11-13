@@ -43,7 +43,13 @@ export function Sidebar({ isOpen, onClose, onNewChat, onSessionSelect, currentSe
         })
         .catch(error => {
           console.error('❌ Failed to load sessions:', error)
+          console.error('Error details:', {
+            message: error instanceof Error ? error.message : String(error),
+            userId: user.userId,
+          })
+          // Still set empty array to show "No sessions" message
           setSessions([])
+          // TODO: Show user-friendly error toast
         })
         .finally(() => setLoading(false))
     } else {
