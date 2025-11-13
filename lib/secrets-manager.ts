@@ -12,6 +12,22 @@ const secretCache = new Map<string, { value: string; expiresAt: number }>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 /**
+ * Normalize API key by removing UTF-8 BOM and trimming whitespace
+ * BOM (Byte Order Mark) can sometimes be present when secrets are copied from certain editors
+ * 
+ * @param rawValue - Raw string value that may contain BOM
+ * @returns Cleaned string without BOM and trimmed
+ */
+function normalizeOpenAIKey(rawValue: string): string {
+  if (!rawValue || typeof rawValue !== 'string') {
+    return rawValue
+  }
+  // Remove UTF-8 BOM (\uFEFF) if present at the start
+  // Also trim any leading/trailing whitespace
+  return rawValue.replace(/^\uFEFF/, '').trim()
+}
+
+/**
  * Get secret from AWS Secrets Manager
  * Falls back to environment variable for local development
  * 
@@ -34,7 +50,7 @@ export async function getSecret(
     const envValue = process.env[envVarFallback]
     if (envValue) {
       console.log(`[Secrets Manager] Using environment variable ${envVarFallback} for local development`)
-      return envValue
+      return normalizeOpenAIKey(envValue)
     }
   }
 
@@ -50,37 +66,43 @@ export async function getSecret(
     // Parse secret value (can be string or JSON)
     let secretValue: string
     if (response.SecretString) {
+      // Remove BOM from raw secret string before processing
+      const cleanedSecretString = normalizeOpenAIKey(response.SecretString)
+      
       try {
         // Try to parse as JSON (in case secret is stored as JSON object)
-        const parsed = JSON.parse(response.SecretString)
+        const parsed = JSON.parse(cleanedSecretString)
         // If it's an object, try to get the key that matches the secret name
         // or use common key names for API keys
         if (typeof parsed === 'string') {
-          secretValue = parsed
+          secretValue = normalizeOpenAIKey(parsed)
         } else if (typeof parsed === 'object' && parsed !== null) {
           // Try common API key field names in order of preference
-          secretValue = parsed.apiKey || parsed.api_key || parsed.OPENAI_API_KEY || parsed.openai_api_key || parsed.value || parsed.key || Object.values(parsed)[0] as string
-          if (!secretValue || typeof secretValue !== 'string') {
+          const rawKey = parsed.apiKey || parsed.api_key || parsed.OPENAI_API_KEY || parsed.openai_api_key || parsed.value || parsed.key || Object.values(parsed)[0] as string
+          if (!rawKey || typeof rawKey !== 'string') {
             throw new Error(`No valid API key found in secret JSON object. Available keys: ${Object.keys(parsed).join(', ')}`)
           }
+          // Normalize the extracted key (remove BOM, trim)
+          secretValue = normalizeOpenAIKey(rawKey)
         } else {
-          secretValue = String(parsed)
+          secretValue = normalizeOpenAIKey(String(parsed))
         }
         console.log(`[Secrets Manager] Successfully parsed JSON secret: ${secretName}`)
       } catch (parseError) {
-        // Not JSON, use as-is
+        // Not JSON, use as-is (already cleaned of BOM)
         console.log(`[Secrets Manager] Secret is not JSON, using as plaintext: ${secretName}`)
-        secretValue = response.SecretString
+        secretValue = cleanedSecretString
       }
     } else if (response.SecretBinary) {
       // Binary secret (unlikely for API keys, but handle it)
-      secretValue = Buffer.from(response.SecretBinary).toString('utf-8')
+      const binaryString = Buffer.from(response.SecretBinary).toString('utf-8')
+      secretValue = normalizeOpenAIKey(binaryString)
     } else {
       throw new Error('Secret value is empty')
     }
     
-    // Validate that we got a non-empty string
-    if (!secretValue || typeof secretValue !== 'string' || secretValue.trim().length === 0) {
+    // Validate that we got a non-empty string (after normalization)
+    if (!secretValue || typeof secretValue !== 'string' || secretValue.length === 0) {
       throw new Error(`Secret value is empty or invalid for ${secretName}`)
     }
 
@@ -100,7 +122,7 @@ export async function getSecret(
       const envValue = process.env[envVarFallback]
       if (envValue) {
         console.warn(`[Secrets Manager] Using environment variable fallback: ${envVarFallback}`)
-        return envValue
+        return normalizeOpenAIKey(envValue)
       }
     }
     
