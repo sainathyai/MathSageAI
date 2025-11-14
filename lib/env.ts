@@ -71,14 +71,16 @@ export function validateEnv() {
  * 2. IAM role (in Amplify/Lambda - automatically available)
  * 3. AWS credentials file (~/.aws/credentials) - for local dev
  * 
- * For Amplify WEB_COMPUTE (Next.js), we need to explicitly use the default provider
+ * For Amplify WEB_COMPUTE (Next.js), credentials are provided via the service role
+ * attached to the Amplify app. The SDK will automatically use these credentials
+ * through the default credential provider chain.
  */
 export function getAwsConfig() {
+  // Return minimal config - SDK will use default credential provider chain
+  // In Amplify, the IAM role credentials are automatically available via
+  // the service role attached to the Amplify app
   return {
     region: env.awsRegion,
-    // Explicitly use default credential provider chain
-    // This ensures the SDK can find credentials from IAM role in Amplify
-    credentials: undefined, // Let SDK use default provider chain
   }
 }
 
