@@ -67,14 +67,28 @@ export async function getUserSessions(userId: string): Promise<SessionData[]> {
     const response = await fetch(`/api/sessions?userId=${userId}`)
     
     if (!response.ok) {
-      throw new Error('Failed to fetch user sessions')
+      // Try to get error details from response
+      let errorMessage = 'Failed to fetch user sessions'
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.error || errorMessage
+        if (errorData.details) {
+          errorMessage += `: ${errorData.details}`
+        }
+        console.error('❌ API Error Response:', errorData)
+      } catch (e) {
+        // If response is not JSON, use status text
+        errorMessage = `Failed to fetch user sessions: ${response.status} ${response.statusText}`
+      }
+      throw new Error(errorMessage)
     }
 
     const data = await response.json()
     return data.sessions || []
   } catch (error) {
-    console.error('Error fetching user sessions:', error)
-    return []
+    console.error('❌ Error fetching user sessions:', error)
+    // Re-throw to allow caller to handle it
+    throw error
   }
 }
 

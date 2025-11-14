@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { env, validateEnv } from '@/lib/env'
+import { getOpenAIApiKey } from '@/lib/secrets-manager'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: env.openaiApiKey,
-})
+// OpenAI client will be initialized with API key from Secrets Manager on each request
+// This ensures we always have the latest secret value
 
 // Validate environment variables on module load
 // Note: This validation is non-blocking - errors are logged but don't prevent server startup
@@ -29,7 +28,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Server configuration error',
-          message: error instanceof Error ? error.message : 'Missing required environment variables. Please check .env.local file.'
+          message: error instanceof Error ? error.message : 'Missing required environment variables. Please check AWS Secrets Manager and Amplify environment variables.'
         },
         { status: 500 }
       )
@@ -194,6 +193,27 @@ export async function POST(request: NextRequest) {
     let response = null
 
     // Try each model until one works
+    // Get OpenAI API key from Secrets Manager
+    let apiKey: string
+    try {
+      apiKey = await getOpenAIApiKey()
+      if (!apiKey || apiKey.trim().length === 0) {
+        throw new Error('OpenAI API key is empty or invalid')
+      }
+      console.log('[Parse Image] Successfully retrieved OpenAI API key from Secrets Manager')
+    } catch (secretsError) {
+      console.error('[Parse Image] Failed to retrieve OpenAI API key:', secretsError)
+      return NextResponse.json(
+        { 
+          error: 'Configuration error',
+          message: `Failed to retrieve OpenAI API key from AWS Secrets Manager: ${secretsError instanceof Error ? secretsError.message : 'Unknown error'}. Please check that the secret exists and the IAM role has permissions.`
+        },
+        { status: 500 }
+      )
+    }
+    
+    const openai = new OpenAI({ apiKey })
+
     for (const model of visionModels) {
       try {
         console.log(`🔄 [parse-image] Trying model: ${model}`)
@@ -279,7 +299,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           {
             error: 'Authentication failed',
-            message: 'Invalid OpenAI API key. Please check your .env.local file.'
+            message: 'Invalid OpenAI API key. The API key retrieved from AWS Secrets Manager is not valid. Please check the secret value in AWS Secrets Manager.'
           },
           { status: 401 }
         )

@@ -350,7 +350,7 @@ export function ChatContainer({ selectedSessionId, onSessionUpdate }: ChatContai
       
       if (error instanceof Error) {
         if (error.message.includes('API key') || error.message.includes('Authentication')) {
-          errorContent = "I'm having trouble connecting. Please check that your OpenAI API key is configured correctly in the .env.local file."
+          errorContent = "I'm having trouble connecting. Please check that your OpenAI API key is configured correctly in AWS Secrets Manager."
         } else if (error.message.includes('rate limit') || error.message.includes('429')) {
           errorContent = "I'm receiving too many requests right now. Please wait a moment and try again."
         } else if (error.message.includes('network') || error.message.includes('fetch')) {

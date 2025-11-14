@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { env, validateEnv } from '@/lib/env'
+import { getOpenAIApiKey } from '@/lib/secrets-manager'
 import { detectStudentState } from '@/app/utils/context/stateDetector'
 import { selectStrategy } from '@/app/utils/context/strategySelector'
 import { buildAdaptivePrompt } from '@/app/utils/context/promptBuilder'
@@ -9,10 +10,8 @@ import { Message } from '@/app/types'
 import { VISUAL_TEACHING_PROMPT } from '@/app/utils/visualTeachingPrompt'
 import { DrawingCommand } from '@/app/types/drawing'
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: env.openaiApiKey,
-})
+// OpenAI client will be initialized with API key from Secrets Manager on each request
+// This ensures we always have the latest secret value
 
 // Validate environment variables on module load
 // Note: This validation is non-blocking - errors are logged but don't prevent server startup
@@ -21,7 +20,6 @@ try {
   validateEnv()
 } catch (error) {
   // Log warning but don't throw - allows server to start
-  // The actual API call will fail gracefully if OPENAI_API_KEY is missing
   console.warn('Environment validation warning (non-fatal):', error instanceof Error ? error.message : error)
 }
 
@@ -34,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { 
           error: 'Server configuration error',
-          message: error instanceof Error ? error.message : 'Missing required environment variables. Please check .env.local file.'
+          message: error instanceof Error ? error.message : 'Missing required environment variables. Please check AWS Secrets Manager and Amplify environment variables.'
         },
         { status: 500 }
       )
@@ -92,6 +90,27 @@ ABSOLUTE RULES - NEVER VIOLATE THESE:
     // Append visual teaching capabilities to the adaptive prompt
     adaptivePrompt += '\n\n' + VISUAL_TEACHING_PROMPT
     
+    // Get OpenAI API key from Secrets Manager
+    let apiKey: string
+    try {
+      apiKey = await getOpenAIApiKey()
+      if (!apiKey || apiKey.trim().length === 0) {
+        throw new Error('OpenAI API key is empty or invalid')
+      }
+      console.log('[Chat API] Successfully retrieved OpenAI API key from Secrets Manager')
+    } catch (secretsError) {
+      console.error('[Chat API] Failed to retrieve OpenAI API key:', secretsError)
+      return NextResponse.json(
+        { 
+          error: 'Configuration error',
+          message: `Failed to retrieve OpenAI API key from AWS Secrets Manager: ${secretsError instanceof Error ? secretsError.message : 'Unknown error'}. Please check that the secret exists and the IAM role has permissions.`
+        },
+        { status: 500 }
+      )
+    }
+    
+    const openai = new OpenAI({ apiKey })
+
     // Prepare messages for OpenAI (including adaptive system message)
     const openaiMessages = [
       { role: 'system' as const, content: adaptivePrompt },
@@ -205,12 +224,23 @@ ABSOLUTE RULES - NEVER VIOLATE THESE:
     
     // Provide more specific error messages
     if (error instanceof Error) {
+      // Check for Secrets Manager errors
+      if (error.message.includes('Secrets Manager') || error.message.includes('secret')) {
+        return NextResponse.json(
+          { 
+            error: 'Configuration error',
+            message: `Failed to retrieve OpenAI API key: ${error.message}. Please check AWS Secrets Manager configuration.`
+          },
+          { status: 500 }
+        )
+      }
+      
       // Check for OpenAI API errors
-      if (error.message.includes('API key') || error.message.includes('authentication')) {
+      if (error.message.includes('API key') || error.message.includes('authentication') || error.message.includes('401') || error.message.includes('Unauthorized')) {
         return NextResponse.json(
           { 
             error: 'Authentication failed',
-            message: 'Invalid OpenAI API key. Please check your .env.local file.'
+            message: 'Invalid OpenAI API key. The API key retrieved from AWS Secrets Manager is not valid. Please check the secret value.'
           },
           { status: 401 }
         )

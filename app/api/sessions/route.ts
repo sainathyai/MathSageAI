@@ -62,6 +62,29 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Validate environment variables first
+    if (!env.dynamoDbTableName) {
+      console.error('❌ DYNAMODB_TABLE_NAME environment variable is not set')
+      return NextResponse.json(
+        { 
+          error: 'Configuration error',
+          details: 'DYNAMODB_TABLE_NAME environment variable is not set'
+        },
+        { status: 500 }
+      )
+    }
+
+    if (!env.awsRegion) {
+      console.error('❌ RESOURCES_REGION environment variable is not set')
+      return NextResponse.json(
+        { 
+          error: 'Configuration error',
+          details: 'RESOURCES_REGION environment variable is not set'
+        },
+        { status: 500 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get('sessionId')
     const userId = searchParams.get('userId')
@@ -89,16 +112,29 @@ export async function GET(request: NextRequest) {
       // This is inefficient for large datasets but works for MVP
       // TODO: Create GSI on userId-updatedAt-index for better performance
       console.log('🔍 Querying sessions for userId:', userId)
+      console.log('📋 Table name:', env.dynamoDbTableName)
+      console.log('🌍 Region:', env.awsRegion)
       
-      const result = await docClient.send(
-        new ScanCommand({
-          TableName: env.dynamoDbTableName,
-          FilterExpression: 'userId = :userId',
-          ExpressionAttributeValues: {
-            ':userId': userId,
-          },
-        })
-      )
+      // Use Scan with FilterExpression to find sessions by userId
+      // Try with attribute_exists first, fallback to simple equality if that fails
+      const scanParams: any = {
+        TableName: env.dynamoDbTableName,
+        FilterExpression: '#uid = :userId',
+        ExpressionAttributeNames: {
+          '#uid': 'userId', // Use attribute name mapping for clarity
+        },
+        ExpressionAttributeValues: {
+          ':userId': userId,
+        },
+      }
+
+      console.log('📋 Scan parameters:', {
+        tableName: scanParams.TableName,
+        filterExpression: scanParams.FilterExpression,
+        userId: userId,
+      })
+
+      const result = await docClient.send(new ScanCommand(scanParams))
 
       console.log('📊 Scan result:', {
         count: result.Count,
@@ -123,9 +159,31 @@ export async function GET(request: NextRequest) {
       )
     }
   } catch (error) {
-    console.error('Error fetching session:', error)
+    console.error('❌ Error fetching session:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
+    // Log detailed error information
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: errorStack,
+      name: error instanceof Error ? error.name : undefined,
+    })
+    
+    // Always return error details (not just in dev) to help diagnose issues
     return NextResponse.json(
-      { error: 'Failed to fetch session' },
+      { 
+        error: 'Failed to fetch session',
+        details: errorMessage,
+        // Include additional context
+        context: {
+          tableName: env.dynamoDbTableName,
+          region: env.awsRegion,
+          errorName: error instanceof Error ? error.name : 'Unknown',
+        },
+        // Only include stack in development
+        ...(env.isDevelopment && { stack: errorStack })
+      },
       { status: 500 }
     )
   }
